@@ -7,7 +7,7 @@
 ###
 
 # Use "~/.multibackup" as default config, if $CONFIG is not specified
-CONFIG="${CONFIG:-${HOME}/.multibackup.conf}"
+CONFIG="${CONFIG:-${HOME}/.multibackup}"
 
 ###
 # Functions
@@ -107,51 +107,65 @@ if [[ "${#pre_commands[@]}" -ne 0 ]]; then
   done
 fi
 
-# Set prefix variables for backup
-current_action="backup"
+# Set prefix variables for backup-list
+current_action="backup-list"
 current_task=1
-total_tasks="${#folders_to_backup[@]}"
+total_tasks="${#files_to_backup[@]}"
 
-# Iterate through "$folders_to_backup"
-for folder_to_backup in "${folders_to_backup[@]}"; do
-  # Check if folder exists
-  debug "Check if source folder \"${folder_to_backup}\" exists..."
-  if [[ -d "${folder_to_backup}" ]]; then
+backup_list=()
+# Iterate through "$files_to_backup"
+for file_to_backup in "${files_to_backup[@]}"; do
+  # Set name source type
+  type="Folder"
+  if [[ -f "${file_to_backup}" ]]; then
+    type="File"
+  fi
+  # Check if folder/file exists
+  debug "Check if source ${type} \"${file_to_backup}\" exists..."
+  if [[ -d "${file_to_backup}" ]] || [[ -f "${file_to_backup}" ]]; then
     # Exist => continue
-    info "Source folder \"${folder_to_backup}\" exists!"
+    info "Source ${type} \"${file_to_backup}\" exists!"
     # Make sure backup destination exists
-    backup_basename=$(replace_slash_with_dash "${folder_to_backup}")
-    absolute_backup_destination=$(strip_duplicate_slashes_in_path "${backup_destination}/${backup_basename}")
-    if [[ ! -d "${absolute_backup_destination}" ]]; then
-      info "Backup destination folder \"${absolute_backup_destination}\" doesn't exist. Creating..."
-      mkdir -p "${absolute_backup_destination}"
-    fi
-
-    # Check if backup already exists (to make sure)
-    if [[ -f "${absolute_backup_destination}/${timestamp}.tar.gz" ]]; then
-      error "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" already exists. Skipping..."
-    else
-      # Start backup
-      info "Starting backup \"${absolute_backup_destination}/${timestamp}.tar.gz\""
-      tar czf "${absolute_backup_destination}/${timestamp}.tar.gz" -P "${folder_to_backup}" "${tar_exclude_parameters[@]}"
-      if [[ $? -eq 0 ]]; then
-        success "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" successfully completed!"
-      else
-        error "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" failed..."
-      fi
-    fi
-
-    # Remove old backups
-    if [[ ! -z "${backup_retention}" ]]; then
-      find "${absolute_backup_destination}/" -maxdepth 1 -mtime "${backup_retention}" -type f -exec rm -rf {} \;
-    fi
+    backup_basename=$(replace_slash_with_dash "${file_to_backup}")
+    backup_list+=( "-P ${file_to_backup}" )
   else
     # Doesn't exist => skip
-    error "Folder \"${folder_to_backup}\" doesn't exist. Skipping..."
+    error "${type} \"${file_to_backup}\" doesn't exist. Skipping..."
   fi
   # Increment $current_task variable
   current_task=$((current_task+1))
 done
+
+# Set prefix variables for backup
+current_action="backup"
+current_task=1
+total_tasks=1
+
+absolute_backup_destination=$(strip_duplicate_slashes_in_path "${backup_destination}")
+if [[ ! -d "${absolute_backup_destination}" ]]; then
+  info "Backup destination folder \"${absolute_backup_destination}\" doesn't exist. Creating..."
+  mkdir -p "${absolute_backup_destination}"
+fi
+
+# Check if backup already exists (to make sure)
+if [[ -f "${absolute_backup_destination}/${timestamp}.tar.gz" ]]; then
+  error "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" already exists. Skipping..."
+else
+  # Start backup
+  info "Starting backup \"${absolute_backup_destination}/${timestamp}.tar.gz\""
+  tar czf "${absolute_backup_destination}/${timestamp}.tar.gz" "${tar_exclude_parameters[@]}" ${backup_list[@]}
+  chmod 600 "${absolute_backup_destination}/${timestamp}.tar.gz"
+  if [[ $? -eq 0 ]]; then
+    success "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" successfully completed!"
+  else
+    error "Backup \"${absolute_backup_destination}/${timestamp}.tar.gz\" failed..."
+  fi
+fi
+
+# Remove old backups
+if [[ ! -z "${backup_retention}" ]]; then
+  find "${absolute_backup_destination}/" -maxdepth 1 -mtime "${backup_retention}" -type f -exec rm -rf {} \;
+fi
 
 # Set prefix variables for pre-commands
 current_action="post-command"

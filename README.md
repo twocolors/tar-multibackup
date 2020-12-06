@@ -9,13 +9,13 @@ Bash script to backup multiple folders and to clean up old backups based on a re
     cd /usr/local/src
     git clone https://github.com/frdmn/tar-multibackup.git
     ln -sf /usr/local/src/tar-multibackup/multibackup /usr/local/bin/multibackup
-    cp /usr/local/src/tar-multibackup/multibackup.conf ~/.multibackup.conf
+    cp /usr/local/src/tar-multibackup/multibackup.conf ~/.multibackup
 
 ### Configuration and usage
 
 * `timestamp` = Format of the timestamp, used in the backup target filename
 * `backup_destination` = Directory which is used to store the archives/backups
-* `folders_to_backup` = Array of folders to backup
+* `files_to_backup` = Array of folders/files to backup
 * `backup_retention` = Retention time how long we should keep the backups
 * `pre_commands` = Array of commands that are executed before the backup starts (stop specific service)
 * `post_commands` = Array of commands that are executed after the backup finished (start specific service)
@@ -23,26 +23,26 @@ Bash script to backup multiple folders and to clean up old backups based on a re
 ### Environment configurations
 
 * `DEBUG` = if set to "true", `set -x` will be set
-* `CONFIG` = if you want to use a different configuration file than the 
+* `CONFIG` = if you want to use a different configuration file than the
 
-Example: 
+Example:
 
     CONFIG=/tmp/testbackup.conf DEBUG=true multibackup
 
-#### Example configuration 
+#### Example configuration
 
 In the example below you can find a `multibackup` configuration file to backup a productional [LiveConfig](http://www.liveconfig.com/) instance.
 
-`vi ~/.multibackup.conf`
+`vi ~/.multibackup`
 
     # Timestamp format, used in the backup target filename
-    timestamp=$(date +%Y%m%d)
+    timestamp=$(hostname)-$(date +%Y%m%d)
 
     # Destination where you want to store your backups
     backup_destination="/var/backups"
 
-    # Folders to backup
-    folders_to_backup=(
+    # Folders/files to backup
+    files_to_backup=(
       "/etc"
       "/var/mail"
       "/var/www"
