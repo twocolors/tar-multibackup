@@ -1,13 +1,14 @@
 tar-multibackup
 ===============
 
+This is modified and enhanced version of multibackup tool started by https://github.com/frdmn/tar-multibackup
 
 Bash script to backup multiple folders and to clean up old backups based on a retention time. Features configurable post/pre-commands, tar excludes as well as backup retentions.
 
 ### Installation
 
     cd /usr/local/src
-    git clone https://github.com/frdmn/tar-multibackup.git
+    git clone https://github.com/twocolors/tar-multibackup.git
     ln -sf /usr/local/src/tar-multibackup/multibackup /usr/local/bin/multibackup
     cp /usr/local/src/tar-multibackup/multibackup.conf ~/.multibackup
 
@@ -83,9 +84,6 @@ To make sure the backup is executed automatically and recurring, we're going to 
     #
 
     0 5 * * *        root       /usr/local/bin/multibackup &>/dev/null
-
-### Version
-1.2.0
 
 ### Lincense
 [MIT](LICENSE)
